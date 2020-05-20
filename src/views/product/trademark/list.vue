@@ -61,14 +61,22 @@
     </el-pagination>
 
     <el-dialog :title="form.id ? '更新' : '添加'" :visible.sync="isShowDialog">
-      <el-form :model="form" style="width:80%">
-        <el-form-item label="品牌名称" :label-width="formLabelWidth">
+      <el-form :model="form" style="width:80%" :rules="rules" ref="tmForm">
+        <el-form-item
+          label="品牌名称"
+          :label-width="formLabelWidth"
+          prop="tmName"
+        >
           <el-input
             v-model="form.tmName"
             placeholder="请输入品牌名称"
           ></el-input>
         </el-form-item>
-        <el-form-item label="品牌LOGO" :label-width="formLabelWidth">
+        <el-form-item
+          label="品牌LOGO"
+          :label-width="formLabelWidth"
+          prop="logoUrl"
+        >
           <el-upload
             class="avatar-uploader"
             action="/dev-api/admin/product/fileUpload"
@@ -110,7 +118,15 @@ export default {
         tmName: ""
       },
       formLabelWidth: "100px",
-      loading: false
+      loading: false,
+
+      rules: {
+        tmName: [
+          { required: true, message: "必须输入品牌名称", trigger: "change" },
+          { min: 2, max: 10, message: "长度在 2 到 10 个字符", trigger: "blur" }
+        ],
+        logoUrl: [{ required: true, message: "品牌图片必须上传" }]
+      }
     };
   },
   mounted() {
@@ -137,27 +153,39 @@ export default {
       }
     },
     // 异步 获取 / 修改 添加品牌
-    async addOrUpdateTrademark() {
-      const trademark = this.form;
-      let result;
-      if (trademark.id) {
-        result = await this.$API.trademark.update(trademark);
-      } else {
-        result = await this.$API.trademark.add(trademark);
-      }
+    addOrUpdateTrademark() {
+      // 进行统一的表单验证，如果没通过不提交请求
+      this.$refs.tmForm.validate(async valid => {
+        if (valid) {
+          // 如果通过，发送请求
+          const trademark = this.form;
+          let result;
+          if (trademark.id) {
+            result = await this.$API.trademark.update(trademark);
+          } else {
+            result = await this.$API.trademark.add(trademark);
+          }
 
-      if (result.code === 200) {
-        this.$message.success(`${trademark.id ? "更新" : "添加"}品牌成功`);
-        // 隐藏digo..
-        this.isShowDialog = false;
-        this.getTrademarks(trademark.id ? this.page : 1);
-        this.form = {
-          logoUrl: "",
-          tmName: ""
-        };
-      } else {
-        this.$message.error("添加品牌失败");
-      }
+          if (result.code === 200) {
+            this.$message.success(`${trademark.id ? "更新" : "添加"}品牌成功`);
+            // 隐藏digo..
+            this.isShowDialog = false;
+            this.getTrademarks(trademark.id ? this.page : 1);
+            this.form = {
+              logoUrl: "",
+              tmName: ""
+            };
+          } else {
+            this.$message.error(`${trademark.id ? "更新" : "添加"}品牌失败`);
+          }
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
+    },
+    resetForm(formName) {
+      this.$refs[formName].resetFields();
     },
     handleSizeChange(limit) {
       // 每页数量改变时的监听回调函数
@@ -192,7 +220,8 @@ export default {
       };
     },
     update(trademark) {
-      this.form = trademark;
+      // this.form = trademark;  //这种情况会导致点击取消按钮之后页面也会更新 因为对象传的是地址不是值
+      this.form = { ...trademark };
       this.isShowDialog = true;
     },
     remove(trademark) {
