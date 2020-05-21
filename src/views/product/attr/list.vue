@@ -82,7 +82,7 @@
                 @blur="toShow(row)"
                 @keyup.enter.native="toShow(row)"
               ></el-input>
-              <span v-else>{{ row.valueName }}</span>
+              <span v-else @click="toEdit(row)">{{ row.valueName }}</span>
             </template>
           </el-table-column>
           <el-table-column label="操作">
@@ -207,24 +207,34 @@ export default {
     },
     // 删除某个属性
     showRemove(value, index) {
-      if (this.$confirm("确定要删除当前属性吗?")) {
-        this.attr.attrValueList.splice(index, 1);
+      this.$confirm("是否删除当前属性?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+        .then(() => {
+          this.attr.attrValueList.splice(index, 1),
+            this.$message({
+              type: "success",
+              message: "删除成功!"
+            });
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除"
+          });
+        });
+    },
+    // 点击属性时可以修改
+    toEdit(value) {
+      // 如果该 attrValueList 里面有edit属性直接改为true
+      if (value.edit) {
+        value.edit = true;
+      } else {
+        // 否则往该响应式数据里面添加一个属性
+        this.$set(value, "edit", true);
       }
-      /* this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.$message({
-            type: 'success',
-            message: '删除成功!'
-          });
-        }).catch(() => {
-          this.$message({
-            type: 'info',
-            message: '已取消删除'
-          });
-        }); */
     }
   }
 };
