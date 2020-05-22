@@ -6,6 +6,7 @@
           v-model="categoryFrom.category1Id"
           placeholder="选择一级分类"
           @change="handleChange1"
+          :disabled="disabled"
         >
           <el-option
             :label="category.name"
@@ -20,6 +21,7 @@
           v-model="categoryFrom.category2Id"
           placeholder="选择二级分类"
           @change="handleChange2"
+          :disabled="disabled"
         >
           <el-option
             :label="category.name"
@@ -34,6 +36,7 @@
           v-model="categoryFrom.category3Id"
           placeholder="选择三级分类"
           @change="handleChange3"
+          :disabled="disabled"
         >
           <el-option
             :label="category.name"
@@ -59,7 +62,8 @@ export default {
       },
       category1List: [], // 获取一级分类列表
       category2List: [], // 获取二级分类列表
-      category3List: [] // 获取三级分类列表
+      category3List: [], // 获取三级分类列表
+      disabled: false
     };
   },
   mounted() {
