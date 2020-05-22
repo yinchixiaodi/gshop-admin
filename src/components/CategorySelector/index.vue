@@ -1,6 +1,6 @@
 <template>
   <el-card>
-    <el-form :inline="true" :model="categoryFrom">
+    <el-form :inline="true" :model="categoryFrom" style="margin-bottom:20px">
       <el-form-item label="一级分类">
         <el-select
           v-model="categoryFrom.category1Id"

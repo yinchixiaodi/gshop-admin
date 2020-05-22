@@ -59,7 +59,9 @@
         >
         </el-pagination>
       </div>
-      <SpuForm v-show="isShowSpuFrom" />
+      <!-- 相当于写了 update:visible="isShowSpuFrom=$event" -->
+      <SpuForm :visible.sync="isShowSpuFrom" ref="spuForm" />
+
       <SkuForm v-show="isShowSkuFrom" />
     </el-card>
   </div>
@@ -125,6 +127,8 @@ export default {
     },
     showUpdateSpu(spuId) {
       this.isShowSpuFrom = true;
+      // 根据传入的id获取初始显示的数据
+      this.$refs.spuForm.initLoadUpdateData(spuId);
     }
   },
   components: {
