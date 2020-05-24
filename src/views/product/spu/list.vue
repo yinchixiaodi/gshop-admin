@@ -10,6 +10,7 @@
           icon="el-icon-plus"
           style="margin-bottom:20px"
           :disabled="!category3Id"
+          @click="showAddSpu"
         >
           添加SPU
         </el-button>
@@ -37,12 +38,19 @@
                 type="info"
                 icon="el-icon-info"
                 title="查看所有SKU"
+                @click="allSku(row)"
               ></HintButton>
-              <HintButton
-                type="danger"
-                icon="el-icon-delete"
-                title="删除SPU"
-              ></HintButton>
+              <el-popconfirm
+                title="确定要删除这个SPU吗?"
+                @onConfirm="removeSpu(row.id)"
+              >
+                <HintButton
+                  type="danger"
+                  icon="el-icon-delete"
+                  title="删除SPU"
+                  slot="reference"
+                ></HintButton>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
@@ -60,9 +68,32 @@
         </el-pagination>
       </div>
       <!-- 相当于写了 update:visible="isShowSpuFrom=$event" -->
-      <SpuForm :visible.sync="isShowSpuFrom" ref="spuForm" />
+      <SpuForm
+        :visible.sync="isShowSpuFrom"
+        ref="spuForm"
+        @saveSuccess="onSaveSuccess"
+      />
 
-      <SkuForm v-show="isShowSkuFrom" />
+      <SkuForm :visible.sync="isShowSkuFrom" />
+      <el-dialog
+        :title="`${spuName}->SKU列表`"
+        :visible.sync="dialogTableVisible"
+      >
+        <el-table :data="skuList">
+          <el-table-column label="名称" prop="skuName"></el-table-column>
+          <el-table-column label="价格(元)" prop="price"></el-table-column>
+          <el-table-column label="重量(KG)" prop="weight"></el-table-column>
+          <el-table-column label="默认图片">
+            <template slot-scope="{ row }">
+              <img
+                :src="row.skuDefaultImg"
+                alt=""
+                style="width:100px;height:100px"
+              />
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -82,7 +113,11 @@ export default {
       limit: 3,
       total: 0,
       isShowSpuFrom: false,
-      isShowSkuFrom: false
+      isShowSkuFrom: false,
+      dialogTableVisible: false,
+      skuList: [],
+      spuName: "",
+      spuId: ""
     };
   },
   mounted() {
@@ -125,10 +160,52 @@ export default {
     showSkuAdd() {
       this.isShowSkuFrom = true;
     },
+    // 显示修改界面
     showUpdateSpu(spuId) {
       this.isShowSpuFrom = true;
       // 根据传入的id获取初始显示的数据
       this.$refs.spuForm.initLoadUpdateData(spuId);
+    },
+    // 显示添加界面
+    showAddSpu() {
+      this.isShowSpuFrom = true;
+      this.$refs.spuForm.initLoadAddData();
+    },
+    // 添加/修改SPU，重新显示列表
+    onSaveSuccess() {
+      console.log(this.spuId);
+      console.log("atguigu~");
+      if (this.spuId) {
+        // 修改SPU，获取当前页的列表
+        this.getSpuList(this.page);
+        this.spuId = "";
+      } else {
+        // 添加SPU，获取第一页的列表
+        this.getSpuList();
+      }
+    },
+    // 删除指定 id 的 SPU
+    async removeSpu(spuId) {
+      // console.log("removeSpu", value);
+      // 点击删除，发送删除SPU的请求
+      const result = await this.$API.spu.remove(spuId);
+      if (result.code === 0) {
+        // 提示删除成功，重新获取列表信息
+        this.$message.success("删除成功");
+        this.getSpuList(this.page);
+      } else {
+        // 提示删除失败
+        this.$message.error("删除失败");
+      }
+    },
+    async allSku(value) {
+      this.dialogTableVisible = true;
+      console.log(value);
+      this.spuName = value.spuName;
+      // 发送请求获取对应id下的sku列表
+      const result = await this.$API.sku.findBySpuId(value.id);
+      console.log(result);
+      this.skuList = result.data;
     }
   },
   components: {
