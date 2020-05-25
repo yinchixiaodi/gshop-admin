@@ -135,7 +135,7 @@ export default {
         tmId: "",
         description: "",
         spuSaleAttrList: [], // 初始化销售属性列表
-        category3Id: 61
+        category3Id: ""
       }, //当前spu对象
       spuImageList: [], //spu图片列表信息
       trademarkList: [], //品牌列表信息
@@ -172,6 +172,8 @@ export default {
     // 点击返回回到...
     back() {
       this.$emit("update:visible", false);
+      this.resetData();
+      this.$emit("cancel");
     },
     // 点击添加spu销售属性
     addSpuSaleAttr() {
@@ -288,7 +290,8 @@ export default {
       this.getSaleAttrList();
     },
     // 由父组件调用的方法,根据id获取对应的数据
-    initLoadAddData() {
+    initLoadAddData(category3Id) {
+      this.spuInfo.category3Id = category3Id;
       // 获取所有品牌的列表
       this.getTrademarkList();
       // 获取所有销售属性(id/name)列表

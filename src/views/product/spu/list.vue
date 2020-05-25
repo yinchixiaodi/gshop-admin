@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card style="margin-bottom:20px">
-      <CategorySelector @categoryChange="handelCategoryChange" />
+      <CategorySelector ref="cs" @categoryChange="handelCategoryChange" />
     </el-card>
     <el-card>
       <div v-show="!isShowSpuFrom && !isShowSkuFrom">
@@ -26,7 +26,7 @@
                 type="primary"
                 icon="el-icon-plus"
                 title="添加SKU"
-                @click="showSkuAdd"
+                @click="showSkuAdd(row)"
               ></HintButton>
               <HintButton
                 type="warning"
@@ -72,9 +72,14 @@
         :visible.sync="isShowSpuFrom"
         ref="spuForm"
         @saveSuccess="onSaveSuccess"
+        @cancel="onCancel"
       />
 
-      <SkuForm :visible.sync="isShowSkuFrom" />
+      <SkuForm
+        :visible.sync="isShowSkuFrom"
+        ref="skuFrom"
+        :saveSuccess="() => (isShowSkuFrom = false)"
+      />
       <el-dialog
         :title="`${spuName}->SKU列表`"
         :visible.sync="dialogTableVisible"
@@ -121,8 +126,18 @@ export default {
     };
   },
   mounted() {
-    this.category3Id = 61;
-    this.getSpuList();
+    // this.category1Id = 2;
+    // this.category2Id = 13;
+    // this.category3Id = 61;
+    // this.getSpuList();
+  },
+  watch: {
+    isShowSpuFrom() {
+      this.$refs.cs.disabled = this.isShowSpuFrom;
+    },
+    isShowSkuFrom() {
+      this.$refs.cs.disabled = this.isShowSkuFrom;
+    }
   },
   methods: {
     handelCategoryChange({ categoryId, level }) {
@@ -157,11 +172,17 @@ export default {
       this.limit = pageSize;
       this.getSpuList();
     },
-    showSkuAdd() {
+    showSkuAdd(spu) {
+      spu = { ...spu };
+      spu.category1Id = this.category1Id;
+      spu.category2Id = this.category2Id;
       this.isShowSkuFrom = true;
+      // 让skuForm去请求加载初始显示需要的数据
+      this.$refs.skuFrom.initLoadAddData(spu);
     },
     // 显示修改界面
     showUpdateSpu(spuId) {
+      this.spuId = spuId;
       this.isShowSpuFrom = true;
       // 根据传入的id获取初始显示的数据
       this.$refs.spuForm.initLoadUpdateData(spuId);
@@ -169,12 +190,13 @@ export default {
     // 显示添加界面
     showAddSpu() {
       this.isShowSpuFrom = true;
-      this.$refs.spuForm.initLoadAddData();
+      this.$refs.spuForm.initLoadAddData(this.category3Id);
     },
     // 添加/修改SPU，重新显示列表
     onSaveSuccess() {
-      console.log(this.spuId);
-      console.log("atguigu~");
+      // console.log(this.spuId);
+      // console.log(this.page);
+      // console.log("atguigu~");
       if (this.spuId) {
         // 修改SPU，获取当前页的列表
         this.getSpuList(this.page);
@@ -184,12 +206,15 @@ export default {
         this.getSpuList();
       }
     },
+    onCancel() {
+      this.spuId = null;
+    },
     // 删除指定 id 的 SPU
     async removeSpu(spuId) {
       // console.log("removeSpu", value);
       // 点击删除，发送删除SPU的请求
       const result = await this.$API.spu.remove(spuId);
-      if (result.code === 0) {
+      if (result.code === 200) {
         // 提示删除成功，重新获取列表信息
         this.$message.success("删除成功");
         this.getSpuList(this.page);
